@@ -4,32 +4,8 @@ window.scrollTo(0, document.body.scrollHeight)
 
 // Store words and their definitions.
 var wordsDefsDict = {
-    // "......": ".....", "geduldig": "patient",
-    "dynamisch": "dynamique",
-    "nett": "gentil",
-    "ruhig": "calme",
-    "freundlich": "aimable",
-    "hilfsbereit": "serviable",
-    "sensibel": "sensible, susceptible",
-    "launisch": "lunatique",
-    "optimistisch": "optimiste (m/f)",
-    "melancholisch": "mélancolique",
-    "sportlich": "sportif",
-    "ehrlich": "honnête",
-    "erzählen": "raconter",
-    "verstehen, versteht, verstand, hat verstanden": "comprendre",
-    "zusammen": "ensemble",
-    "sich langweilen, langweilte sich, hat sich gelangweilt": "s'ennuyer",
-    "beide": "les deux",
-    "die Geheimnisse": "les secrets",
-    "Schach spielen": "jouer aux échecs",
-    "die Strasse": "la rue",
-    "sich auf jemanden verlassen": "compter sur qqn",
-    "wollen": "vouloir",
-    "fahren, fährt, fuhr, ist gefahren": "aller en véhicule",
-    "studieren (hat studiert)": "faire des études",
-    "sich gut verstehen": "bien s'entendre",
-    "später": "plus tard"
+    // "geduldig": "patient","dynamisch": "dynamique","nett": "gentil","ruhig": "calme","freundlich": "aimable","hilfsbereit": "serviable","sensibel": "sensible, susceptible","launisch": "lunatique","optimistisch": "optimiste (m/f)","melancholisch": "mélancolique","sportlich": "sportif","ehrlich": "honnête","erzählen": "raconter","verstehen, versteht, verstand, hat verstanden": "comprendre","zusammen": "ensemble","sich langweilen, langweilte sich, hat sich gelangweilt": "s'ennuyer","beide": "les deux","die Geheimnisse": "les secrets","Schach spielen": "jouer aux échecs","die Strasse": "la rue","sich auf jemanden verlassen": "compter sur qqn","wollen": "vouloir","fahren, fährt, fuhr, ist gefahren": "aller en véhicule","studieren (hat studiert)": "faire des études","sich gut verstehen": "bien s'entendre","später": "plus tard"
+  
 };
 
 
@@ -144,3 +120,4 @@ setTimeout(function() {
 
 
 }, 5500);
+
