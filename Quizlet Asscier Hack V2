@@ -1,0 +1,139 @@
+(async function() {
+  const sleep = ms => new Promise(r => setTimeout(r, ms));
+  function waitFor(cond, timeout = 10, interval = 10) { 
+    const start = Date.now();
+    return new Promise((resolve, reject) => {
+      (function check() {
+        try {
+          if (cond()) return resolve();
+          if (Date.now() - start > timeout) return reject('timeout');
+          setTimeout(check, interval);
+        } catch (e) { reject(e); }
+      })();
+    });
+  }
+
+  const origConsoleError = console.error;
+  console.error = function(msg, ...args) {
+    try {
+      if (typeof msg === 'string' && msg.includes("Failed to execute 'postMessage'")) return;
+    } catch (e) {}
+    origConsoleError.apply(console, [msg, ...args]);
+  };
+/////// remplicer le ligne suivante avec vos mot avec vos mots de cette manierre "exemple": "exemple", "exemple":"exemple"////////////
+  const wordsDefsDict = {
+    "EXEMPLE1": "EXEMPLE2",
+  };
+/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+  try {
+    try {
+      await waitFor(() => document.querySelectorAll('.SetPageTerm-wordText').length > 0 &&
+                         document.querySelectorAll('.SetPageTerm-definitionText').length > 0, 10);
+      const words = Array.from(document.querySelectorAll('.SetPageTerm-wordText'));
+      const defs  = Array.from(document.querySelectorAll('.SetPageTerm-definitionText'));
+      words.forEach((el, i) => {
+        const k = el.textContent.trim();
+        const v = (defs[i] && defs[i].textContent.trim()) || '';
+        if (k && v && !(k in wordsDefsDict)) wordsDefsDict[k] = v;
+      });
+    } catch (e) {
+      console.log('Pas de mots détectés sur la page (timeout) → j’utilise uniquement ton dictionnaire fourni.');
+    }
+
+    const tileCandidates = Array.from(document.querySelectorAll('button, a, div, span'));
+    const matchTile = tileCandidates.find(el => el.innerText && /associer|match|zuordnen|zuordnen/i.test(el.innerText.trim().toLowerCase()));
+    if (matchTile) {
+      try { matchTile.dispatchEvent(new PointerEvent('pointerdown', {bubbles:true})); } catch(e) {}
+      try { matchTile.click(); } catch(e) {}
+    } else {
+      try {
+        const guess = location.href.endsWith('/') ? location.href + 'match' : location.href + '/match';
+        console.log('Tuile "Associer" non trouvée — tentative d’ouverture de :', guess);
+        location.href = guess;
+        await sleep(0);
+      } catch (e) { console.warn('Impossible d’ouvrir le mode match automatiquement.'); }
+    }
+
+    await waitFor(() => Array.from(document.querySelectorAll('button, [role="button"], .UIButton-wrapper'))
+      .some(b => b.innerText && /commencer|démarrer|start|jouer|play|go|weiter/i.test(b.innerText)), 10).catch(()=>{});
+    const startBtn = Array.from(document.querySelectorAll('button, [role="button"], .UIButton-wrapper'))
+      .find(b => b.innerText && /commencer|démarrer|start|jouer|play|go|weiter/i.test(b.innerText));
+    if (startBtn) {
+      try { startBtn.click(); } catch(e) { startBtn.parentNode && startBtn.parentNode.click(); }
+    }
+    await sleep(0);
+    await waitFor(() => document.querySelectorAll('[aria-label]').length > 0, 10);
+    let tileEls = Array.from(document.querySelectorAll('[aria-label]'));
+
+    const normalize = s => (s || '').normalize ? s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : (s||'').toLowerCase().trim();
+
+    const normToEls = {};
+    tileEls.forEach(el => {
+      const label = (el.getAttribute('aria-label') || el.textContent || '').trim();
+      const n = normalize(label);
+      if (!n) return;
+      if (!normToEls[n]) normToEls[n] = [];
+      normToEls[n].push(el);
+    });
+
+    function findTileByText(text) {
+      const target = normalize(text);
+      if (!target) return null;
+      if (normToEls[target]) {
+        const arr = normToEls[target];
+        const firstFree = arr.find(e => !e.__matched);
+        return firstFree || arr[0];
+      }
+      for (const key in normToEls) {
+        if (key.includes(target) || target.includes(key)) {
+          const arr = normToEls[key];
+          const firstFree = arr.find(e => !e.__matched);
+          if (firstFree) return firstFree;
+          return arr[0];
+        }
+      }
+      for (const el of tileEls) {
+        const lab = normalize(el.getAttribute('aria-label') || el.textContent || '');
+        if (lab && (lab === target || lab.includes(target) || target.includes(lab))) return el;
+      }
+      return null;
+    }
+
+    async function clickElementSafe(el) {
+      if (!el) return;
+      const clickable = el.closest('button') || el;
+      try { clickable.dispatchEvent(new PointerEvent('pointerdown', {bubbles:true})); } catch (e) {}
+      try { clickable.click(); } catch (e) {}
+    }
+
+    for (const key of Object.keys(wordsDefsDict)) {
+      const value = wordsDefsDict[key];
+      let keyEl = findTileByText(key);
+      let valEl = findTileByText(value);
+
+      if ((!keyEl || !valEl) && key.includes(',')) {
+        const shortKey = key.split(/[,(]/)[0].trim();
+        const shortVal = value.split(/[,(]/)[0].trim();
+        keyEl = keyEl || findTileByText(shortKey);
+        valEl = valEl || findTileByText(shortVal);
+      }
+
+      if (keyEl && valEl && keyEl !== valEl && !keyEl.__matched && !valEl.__matched) {
+        await clickElementSafe(keyEl);
+        await sleep(110);
+        await clickElementSafe(valEl);
+        keyEl.__matched = true;
+        valEl.__matched = true;
+        await sleep(200);
+      } else {
+        console.log('Pas trouvé / déjà apparié pour :', key, '→', value);
+      }
+    }
+
+    console.log('Script terminé — Vitesse Maximale : tous les délais réduits à 0ms (sauf les vérifications de chargement, fixées à 10ms).');
+  } catch (err) {
+    console.error('Erreur durant l’exécution :', err);
+  } finally {
+    if (origConsoleError) console.error = origConsoleError;
+  }
+})();
